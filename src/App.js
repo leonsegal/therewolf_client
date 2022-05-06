@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import socketIOClient from "socket.io-client";
 import InfoPanel from "./header/InfoPanel";
 import Messages from "./Messages";
@@ -7,51 +7,37 @@ import Intro from "./Intro";
 
 let apiEndpoint = "http://localhost:4500";
 let socket = socketIOClient(apiEndpoint);
-let playerName = getName();
-let hasRegistered = false;
-
-registerPlayer(playerName);
-
-function getName() {
-  let playerName = sessionStorage.getItem("name");
-
-  if (playerName) {
-    return playerName;
-  }
-
-  playerName = prompt("What's your name?");
-
-  if (!playerName) {
-    getName();
-  }
-
-  return playerName;
-}
-
-function registerPlayer(name) {
-  sessionStorage.setItem("name", name);
-
-  socket.emit("player connected", name);
+let id = sessionStorage.getItem("id");
+if (id) {
+  socket.emit("reconnect player", id);
 }
 
 function App() {
-  let [messages, setMessages] = useState([]);
+  let [name, setName] = useState("");
   let [players, setPlayers] = useState([]);
+  let [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    socket.on("player connected", (data) => {
-      hasRegistered = true;
-      setPlayers(data.players);
-      setMessages(data.messages);
+    socket.on("player connected", ({ name, players, messages }) => {
+      sessionStorage.setItem("id", id);
+
+      setName(name);
+      setPlayers(players);
+      setMessages(messages);
     });
   }, []);
 
   return (
     <>
-      {!hasRegistered ? <Intro /> : ""}
-      {hasRegistered ? <InfoPanel players={players} /> : ""}
-      {hasRegistered ? <Messages socket={socket} allMessages={messages} /> : ""}
-      {hasRegistered ? <ChatForm socket={socket} /> : ""}
+      {name === "" ? (
+        <Intro socket={socket} />
+      ) : (
+        <>
+          <InfoPanel players={(players, id)} />
+          <Messages socket={socket} allMessages={messages} />
+          <ChatForm socket={socket} />
+        </>
+      )}
     </>
   );
 }

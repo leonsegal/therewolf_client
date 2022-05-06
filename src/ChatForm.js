@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
 
-function ChatForm(props) {
+function ChatForm({ socket }) {
   let [message, setMessage] = useState("");
 
   useEffect(() => {
-    props.socket.on("chat message", () => setMessage(""));
-  }, [props.socket]);
+    socket.on("chat message", () => setMessage(""));
+  }, [socket]);
 
   let handleSubmit = (e) => {
     e.preventDefault();
-    props.socket.emit("chat message", message);
+    socket.emit("chat message", message);
     message = "";
   };
 
